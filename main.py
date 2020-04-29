@@ -39,7 +39,20 @@ def run_annotator():
                 key = cv2.waitKey(_DELAY) & 0xff
                 if key == 97: # a = make annotation
                     bboxes = cv2.selectROIs("Annotator", frame)
+                    frame_bkp = frame
                     print('boxes: {}'.format(bboxes))
+
+                    # ask for number of each box
+                    for i, box in enumerate(bboxes):
+                        p1 = (box[0], box[1])
+                        p2 = (box[0]+box[2], box[1]+box[3])
+                        cv2.rectangle(frame_bkp, p1, p2, (0,0,255))
+                        cv2.putText(frame_bkp, 'lp {}'.format(i), p1, cv2.FONT_HERSHEY_COMPLEX, 1, (0,0,255))
+
+                    cv2.imshow("Annotator", frame_bkp)
+                    for i, box in enumerate(bboxes):
+                        lp_number = input('License plate number of lp={}: '.format(i))
+                        print('lp_number: {}'.format(lp_number))
                 if key == 42: # *
                     _DELAY = _DEFAULT_DELAY
                     print(_DELAY)
@@ -57,7 +70,7 @@ def run_annotator():
     except IndexError:
         print('List is empty')
     finally:
-        if not prepareVideosThread.isAlive():
+        if (prepareVideosThread is not None) and (not prepareVideosThread.isAlive()):
             print('Thread is not running. Closing process')
             return
         else:
@@ -65,12 +78,21 @@ def run_annotator():
             print('Thread is running. Waiting {} seconds for the next video'.format(wait_time))
             Timer(wait_time, run_annotator).start()
 
+def generate_list():
+    #VIDEOS_LIST.append('D:\\fiscalia\\video_test\\kauel.mp4')
+    VIDEOS_LIST.append('D:\\fiscalia\\test.mp4')
+
 if __name__ == "__main__":
     global prepareVideosThread
+    PREPARE_VIDEOS = False
     #dbBuilder = DBBuilder(DIR_SOURCE_PATH, DIR_IMAGES_PATH)
 
-    prepareVideosThread = threading.Thread(target=prepare_videos, args=(DIR_VIDEOS_PATH,))
-    prepareVideosThread.start()
+    if PREPARE_VIDEOS:
+        prepareVideosThread = threading.Thread(target=prepare_videos, args=(DIR_VIDEOS_PATH,))
+        prepareVideosThread.start()
+    else:
+        prepareVideosThread = None
+        generate_list()
 
     run_annotator()
 
